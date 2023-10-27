@@ -1,4 +1,5 @@
 const net = require("net");
+const fs = require("fs");
 
 const server = net.createServer(handleClient);
 
@@ -7,6 +8,8 @@ function handleClient(socket) {
     const request = data.toString();
     const { path, userAgent } = parseRequest(request);
 
+    console.log(`Request: ${path} (${userAgent})`);
+
     if (path === "/") {
       sendResponse(socket, 200, "OK", "text/plain", "");
     } else if (path.startsWith("/echo/")) {
@@ -14,6 +17,20 @@ function handleClient(socket) {
       sendResponse(socket, 200, "OK", "text/plain", content);
     } else if (path === "/user-agent") {
       sendResponse(socket, 200, "OK", "text/plain", userAgent);
+    } else if (path.startsWith("/files/")) {
+      const dirIndex = process.argv.indexOf("--directory") + 1;
+      if (dirIndex === 0) {
+        socket.end();
+      }
+      const dir = process.argv[dirIndex];
+      const fileName = path.substring(7);
+      fs.readFile(`${dir}/${fileName}`, (err, data) => {
+        if (err) {
+          sendResponse(socket, 404, "Not Found", "text/plain", "404 Not Found");
+          return;
+        }
+        sendResponse(socket, 200, "OK", "application/octet-stream", data);
+      });
     } else {
       sendResponse(socket, 404, "Not Found", "text/plain", "404 Not Found");
     }
