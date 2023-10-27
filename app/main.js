@@ -1,9 +1,9 @@
 const net = require("net");
 
 const server = net.createServer((socket) => {
-    socket.on("data", (data) => {
+    socket.on("data", (stream) => {
         socket.write("HTTP/1.1 200 OK\r\n\r\n");
-        server.close();
+        socket.end()
     });
     socket.on("close", () => {
         socket.end();
